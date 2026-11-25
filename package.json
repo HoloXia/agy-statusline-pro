@@ -1,0 +1,24 @@
+{
+  "name": "agy-statusline-pro",
+  "version": "1.0.0",
+  "description": "Enhanced zero-dependency statusLine dashboard for Antigravity CLI with live actual model tracking, token counts, and friendly alerts.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "agy-statusline-pro": "./install.mjs"
+  },
+  "files": [
+    "package.json",
+    "metrics.mjs",
+    "transcript.mjs",
+    "render.mjs",
+    "statusline.mjs",
+    "install.mjs",
+    "README.md"
+  ],
+  "repository": "github:HoloXia/agy-statusline-pro",
+  "homepage": "https://github.com/HoloXia/agy-statusline-pro#readme",
+  "license": "MIT"
+}
