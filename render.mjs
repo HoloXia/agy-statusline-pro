@@ -253,7 +253,7 @@ export function render(
       row.push(subtle('  '), part(l.confirmPending, 31, true));
     }
     if (metrics.cwd && dirMode !== 'none') {
-      const dirText = formatCwd(metrics.cwd, { basenameOnly: dirMode === 'base' });
+      const dirText = formatCwd(metrics.cwd, { mode: dirMode });
       if (dirText) {
         row.push(subtle(sep), part(`${l.dir} `), part(dirText, 34, true));
       }
@@ -263,8 +263,10 @@ export function render(
 
   const mainVariants = [
     { showTokens: true, showBars: width >= 72, showCacheReads: true, showContextHints: true, showCacheHints: true, dirMode: 'full', short: false },
-    { showTokens: true, showBars: false, showCacheReads: true, showContextHints: true, showCacheHints: true, dirMode: 'full', short: false },
-    { showTokens: true, showBars: false, showCacheReads: true, showContextHints: true, showCacheHints: false, dirMode: 'base', short: true },
+    { showTokens: true, showBars: width >= 72, showCacheReads: true, showContextHints: true, showCacheHints: true, dirMode: 'full', short: true },
+    { showTokens: true, showBars: false, showCacheReads: true, showContextHints: true, showCacheHints: true, dirMode: 'full', short: true },
+    { showTokens: true, showBars: false, showCacheReads: true, showContextHints: true, showCacheHints: false, dirMode: 'compact', short: true },
+    { showTokens: true, showBars: false, showCacheReads: false, showContextHints: false, showCacheHints: false, dirMode: 'compact', short: true },
     { showTokens: true, showBars: false, showCacheReads: false, showContextHints: false, showCacheHints: false, dirMode: 'base', short: true },
     { showTokens: true, showBars: false, showCacheReads: false, showContextHints: false, showCacheHints: false, dirMode: 'none', short: true },
     { showTokens: false, showBars: false, showCacheReads: false, showContextHints: false, showCacheHints: false, dirMode: 'none', short: true },

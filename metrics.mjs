@@ -499,8 +499,8 @@ export function countdown(quota, now = Date.now()) {
   return `${Math.floor(seconds / 86400)}d${Math.floor((seconds % 86400) / 3600)}h`;
 }
 
-/** Format a working directory path compactly while keeping parent context for disambiguation. */
-export function formatCwd(rawPath, { home = homedir(), maxLen = 32, basenameOnly = false } = {}) {
+/** Format a working directory path cleanly (full ~-prefixed path by default, with compact/base fallbacks). */
+export function formatCwd(rawPath, { home = homedir(), mode = 'full', maxLen = 32, basenameOnly = false } = {}) {
   if (typeof rawPath !== 'string' || !rawPath.trim()) return '';
   let norm = rawPath.trim().replace(/\\/g, '/');
   if (norm !== '/' && !/^[A-Za-z]:\/$/.test(norm)) {
@@ -517,10 +517,12 @@ export function formatCwd(rawPath, { home = homedir(), maxLen = 32, basenameOnly
     }
   }
   if (norm === '~' || norm === '/' || /^[A-Za-z]:\/$/.test(norm)) return norm;
+  const effectiveMode = basenameOnly ? 'base' : mode;
+  if (effectiveMode === 'full') return norm;
   const parts = norm.split('/').filter(Boolean);
   if (!parts.length) return norm;
   const base = parts[parts.length - 1];
-  if (basenameOnly) return base;
+  if (effectiveMode === 'base') return base;
   if (norm.length <= maxLen || parts.length <= 2) return norm;
   const parent = parts[parts.length - 2];
   return `…/${parent}/${base}`;
