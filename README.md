@@ -4,16 +4,13 @@
 
 ## 实际效果
 
-![agy-statusline-pro 实际效果图](./assets/preview.png)
+日常运行效果（含实际模型与切换轨迹）：
 
-开启 Orchestrator 自动调度且触发告警提示时的完整效果示例：
+![agy-statusline-pro 日常运行效果图](./assets/preview.png)
 
-```text
-上下文 23.8% (249.5K/1M) >200K ██░░░░░░  │  缓存 78.3% · 195.4K 读取  │  生成中  [! 待确认]
-模型 Orchestrator (Neon) → 实际 Hydrogen (High) │ [PLAN] │ 子代理 1 · 后台 1 · 排队 1 │ 入 54.1K · 出 1.2K │ [沙箱]
-Gemini     剩余  5h 61.5% ███░░  ↻ 2h46m   │   周 85.5% ████░  ↻ 6d3h
-Claude     剩余  5h 100% █████  ↻ <1m   │   周 100% █████  ↻ <1m
-```
+开启 Orchestrator 自动调度且触发完整告警提示时的效果：
+
+![Orchestrator 模式与完整告警效果图](./assets/preview-orchestrator.png)
 
 ## 核心特性
 
