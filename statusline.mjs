@@ -89,6 +89,8 @@ function previewPayload(orchestrator = false) {
   if (!orchestrator) {
     return {
       version: '1.5.16',
+      cwd: '/workspace/projects/my-app',
+      workspace: { current_dir: '/workspace/projects/my-app', project_dir: '/workspace/projects/my-app' },
       model: { id: 'gemini-4-neon-high', display_name: 'Gemini 4 Neon (High)', effort: 'high' },
       agent_state: 'idle',
       terminal_width: 110,
@@ -114,6 +116,8 @@ function previewPayload(orchestrator = false) {
   }
   return {
     version: '1.5.16',
+    cwd: '/workspace/projects/agy-statusline-pro',
+    workspace: { current_dir: '/workspace/projects/agy-statusline-pro', project_dir: '/workspace/projects/agy-statusline-pro' },
     model: { id: 'gemini-pro-orchestrator-neon', display_name: 'Orchestrator (Neon)' },
     agent_state: 'working',
     cycle_mode: 'plan',

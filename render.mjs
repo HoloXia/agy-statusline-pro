@@ -1,4 +1,4 @@
-import { compact, compactCapacity, countdown, percentage, quotaGroupForModel, shortModelName } from './metrics.mjs';
+import { compact, compactCapacity, countdown, formatCwd, percentage, quotaGroupForModel, shortModelName } from './metrics.mjs';
 
 const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
 const clusters = text => [...segmenter.segment(text)].map(item => item.segment);
@@ -62,6 +62,7 @@ const labels = {
     subagents: 'Subagents',
     bgTasks: 'Tasks',
     queued: 'Queued',
+    dir: 'Dir',
   },
   'zh-CN': {
     context: '上下文',
@@ -99,6 +100,7 @@ const labels = {
     subagents: '子代理',
     bgTasks: '后台',
     queued: '排队',
+    dir: '目录',
   },
   'zh-TW': {
     context: '上下文',
@@ -136,6 +138,7 @@ const labels = {
     subagents: '子代理',
     bgTasks: '背景',
     queued: '排隊',
+    dir: '目錄',
   },
 };
 
@@ -216,7 +219,7 @@ export function render(
     return ` (${compact(metrics.context.usedTokens)}/${compactCapacity(metrics.context.capacity)})`;
   };
 
-  const buildMainRow = ({ showTokens, showBars, showCacheReads, showContextHints, showCacheHints, short }) => {
+  const buildMainRow = ({ showTokens, showBars, showCacheReads, showContextHints, showCacheHints, dirMode, short }) => {
     const sep = short ? ' │ ' : '  │  ';
     const row = [
       part(`${short ? l.shortContext : l.context} `),
@@ -249,15 +252,22 @@ export function render(
     if (metrics.toolConfirmationPending) {
       row.push(subtle('  '), part(l.confirmPending, 31, true));
     }
+    if (metrics.cwd && dirMode !== 'none') {
+      const dirText = formatCwd(metrics.cwd, { basenameOnly: dirMode === 'base' });
+      if (dirText) {
+        row.push(subtle(sep), part(`${l.dir} `), part(dirText, 34, true));
+      }
+    }
     return row;
   };
 
   const mainVariants = [
-    { showTokens: true, showBars: width >= 72, showCacheReads: true, showContextHints: true, showCacheHints: true, short: false },
-    { showTokens: true, showBars: false, showCacheReads: true, showContextHints: true, showCacheHints: true, short: false },
-    { showTokens: true, showBars: false, showCacheReads: true, showContextHints: true, showCacheHints: false, short: true },
-    { showTokens: true, showBars: false, showCacheReads: false, showContextHints: false, showCacheHints: false, short: true },
-    { showTokens: false, showBars: false, showCacheReads: false, showContextHints: false, showCacheHints: false, short: true },
+    { showTokens: true, showBars: width >= 72, showCacheReads: true, showContextHints: true, showCacheHints: true, dirMode: 'full', short: false },
+    { showTokens: true, showBars: false, showCacheReads: true, showContextHints: true, showCacheHints: true, dirMode: 'full', short: false },
+    { showTokens: true, showBars: false, showCacheReads: true, showContextHints: true, showCacheHints: false, dirMode: 'base', short: true },
+    { showTokens: true, showBars: false, showCacheReads: false, showContextHints: false, showCacheHints: false, dirMode: 'base', short: true },
+    { showTokens: true, showBars: false, showCacheReads: false, showContextHints: false, showCacheHints: false, dirMode: 'none', short: true },
+    { showTokens: false, showBars: false, showCacheReads: false, showContextHints: false, showCacheHints: false, dirMode: 'none', short: true },
   ];
   let main = buildMainRow(mainVariants[0]);
   for (const variant of mainVariants) {

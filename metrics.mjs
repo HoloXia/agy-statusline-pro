@@ -1,3 +1,5 @@
+import { homedir } from 'node:os';
+
 const object = value => (value && typeof value === 'object' && !Array.isArray(value) ? value : {});
 const number = value => (typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null);
 const tokens = value => (Number.isSafeInteger(value) && value >= 0 ? value : null);
@@ -414,11 +416,17 @@ export function normalize(payload, fallbackConfiguredModel = null) {
 
   const computedCacheRate = cacheRate(model, payload.version, input, read, write, payload.agent_state);
 
+  const rawCwd =
+    cleanText(object(payload.workspace).current_dir || payload.cwd || object(payload.workspace).project_dir, 512) ||
+    null;
+
   return {
     model: cleanText(identifiedModel?.display || rawModelLabel, 120) || null,
     modelId: cleanText(model.id, 120) || null,
     actualModel: null,
     transcript: null,
+    cwd: rawCwd,
+    vcsType: cleanText(object(payload.vcs).type, 16) || null,
     state: states.includes(payload.agent_state) ? payload.agent_state : null,
     width: Number.isInteger(payload.terminal_width) && payload.terminal_width > 0 ? Math.min(500, payload.terminal_width) : 80,
     context: {
@@ -489,4 +497,31 @@ export function countdown(quota, now = Date.now()) {
   if (seconds < 3600) return `${Math.ceil(seconds / 60)}m`;
   if (seconds < 86400) return `${Math.floor(seconds / 3600)}h${Math.floor((seconds % 3600) / 60)}m`;
   return `${Math.floor(seconds / 86400)}d${Math.floor((seconds % 86400) / 3600)}h`;
+}
+
+/** Format a working directory path compactly while keeping parent context for disambiguation. */
+export function formatCwd(rawPath, { home = homedir(), maxLen = 32, basenameOnly = false } = {}) {
+  if (typeof rawPath !== 'string' || !rawPath.trim()) return '';
+  let norm = rawPath.trim().replace(/\\/g, '/');
+  if (norm !== '/' && !/^[A-Za-z]:\/$/.test(norm)) {
+    norm = norm.replace(/\/+$/, '');
+  }
+  const normHome = typeof home === 'string' && home ? home.trim().replace(/\\/g, '/').replace(/\/+$/, '') : '';
+  if (normHome) {
+    const isWinHome = /^[A-Za-z]:\//.test(normHome);
+    const matchesHome = isWinHome
+      ? norm.toLowerCase() === normHome.toLowerCase() || norm.toLowerCase().startsWith(normHome.toLowerCase() + '/')
+      : norm === normHome || norm.startsWith(normHome + '/');
+    if (matchesHome) {
+      norm = '~' + norm.slice(normHome.length);
+    }
+  }
+  if (norm === '~' || norm === '/' || /^[A-Za-z]:\/$/.test(norm)) return norm;
+  const parts = norm.split('/').filter(Boolean);
+  if (!parts.length) return norm;
+  const base = parts[parts.length - 1];
+  if (basenameOnly) return base;
+  if (norm.length <= maxLen || parts.length <= 2) return norm;
+  const parent = parts[parts.length - 2];
+  return `…/${parent}/${base}`;
 }
