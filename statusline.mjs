@@ -4,7 +4,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { normalize } from './metrics.mjs';
 import { render } from './render.mjs';
-import { findLatestTranscript, formatTranscriptHistory, readTranscriptSummary } from './transcript.mjs';
+import { findLatestTranscript, formatTranscriptHistory, resolveTranscriptSummary } from './transcript.mjs';
 
 const MAX_INPUT = 256 * 1024;
 const help = `AGY Statusline Pro (Node.js 20+)
@@ -190,8 +190,8 @@ try {
     if (rawPayload._syntheticTranscript) {
       metrics.transcript = rawPayload._syntheticTranscript;
       metrics.actualModel = rawPayload._syntheticTranscript.latestModel;
-    } else if (!opts['no-transcript'] && metrics.transcriptPath) {
-      const summary = await readTranscriptSummary(metrics.transcriptPath);
+    } else if (!opts['no-transcript'] && (metrics.transcriptPath || metrics.conversationId)) {
+      const summary = await resolveTranscriptSummary(metrics.transcriptPath, metrics.conversationId);
       if (summary) {
         metrics.transcript = summary;
         metrics.actualModel = summary.latestModel;

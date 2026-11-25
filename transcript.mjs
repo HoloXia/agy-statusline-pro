@@ -117,6 +117,33 @@ export async function readTranscriptSummary(transcriptPath, { maxBytes = 262144 
   }
 }
 
+/**
+ * Resolve transcript summary across CLI/host path variants (`antigravity` vs
+ * `antigravity-cli`) and safe `conversation_id` fallback.
+ */
+export async function resolveTranscriptSummary(transcriptPath, conversationId = null, opts = {}) {
+  const candidates = [];
+  const rawPath = typeof transcriptPath === 'string' ? transcriptPath.trim() : '';
+  if (rawPath) {
+    candidates.push(rawPath);
+    const cliAlt = rawPath.replace(/([/\\]\.gemini[/\\])antigravity([/\\]brain[/\\])/, '$1antigravity-cli$2');
+    if (cliAlt !== rawPath) candidates.push(cliAlt);
+  }
+  const safeId = typeof conversationId === 'string' ? conversationId.trim() : '';
+  if (/^[a-zA-Z0-9_-]{8,128}$/.test(safeId)) {
+    const home = homedir();
+    candidates.push(
+      join(home, '.gemini', 'antigravity-cli', 'brain', safeId, '.system_generated', 'logs', 'transcript.jsonl'),
+      join(home, '.gemini', 'antigravity', 'brain', safeId, '.system_generated', 'logs', 'transcript.jsonl')
+    );
+  }
+  for (const candidate of new Set(candidates)) {
+    const summary = await readTranscriptSummary(candidate, opts);
+    if (summary) return summary;
+  }
+  return null;
+}
+
 /** Locate the most recently updated transcript.jsonl under ~/.gemini/antigravity-cli/brain/. */
 export async function findLatestTranscript(baseDir = join(homedir(), '.gemini', 'antigravity-cli', 'brain')) {
   try {
