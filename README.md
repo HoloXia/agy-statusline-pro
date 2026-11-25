@@ -1,24 +1,69 @@
 # agy-statusline-pro
 
-零依赖的 Antigravity CLI (`agy`) 增强状态栏插件。
+零依赖的 Antigravity CLI (`agy`) 增强状态栏插件。实时展示精确上下文 Token 用量、当前设置模型与实际底层子模型（如 Orchestrator 下的 Neon / Hydrogen 切换）、缓存健康度与按需告警提示。
 
-## 功能特性
+## 实际效果
 
-- **具体上下文 Token 数**：直接展示 `上下文 14.2% (149K/1M)`，超过 `200K` 或达到 `>=75%` 时自动高亮提醒 `>200K` / `建议/compact`。
-- **实时模型与实际子模型追踪**：同时显示设置模型与当前实际调用的底层模型（例如 `模型 Orchestrator (Neon) → 实际 Hydrogen (High)`），并展示近期切换轨迹 `轨迹 Neon×7→Hydrogen×4` 及本轮 `入 / 出` Token。
-- **缓存健康度与重建提示**：兼容最新 CLI 1.5.x+ 统计，缓存冷启动或重建时提示 `缓存重建` / `+写入`。
-- **按需友好提示（不触发时零干扰）**：
-  - `[! 待确认]`：等待工具授权时高亮提醒
+![agy-statusline-pro 实际效果图](./assets/preview.png)
+
+开启 Orchestrator 自动调度且触发告警提示时的完整效果示例：
+
+```text
+上下文 23.8% (249.5K/1M) >200K ██░░░░░░  │  缓存 78.3% · 195.4K 读取  │  生成中  [! 待确认]
+模型 Orchestrator (Neon) → 实际 Hydrogen (High) │ [PLAN] │ 子代理 1 · 后台 1 · 排队 1 │ 入 54.1K · 出 1.2K │ [沙箱]
+Gemini     剩余  5h 61.5% ███░░  ↻ 2h46m   │   周 85.5% ████░  ↻ 6d3h
+Claude     剩余  5h 100% █████  ↻ <1m   │   周 100% █████  ↻ <1m
+```
+
+## 核心特性
+
+- **精确上下文 Token 与阈值提示**：同时显示百分比与具体 Token 数（如 `13.4% (138.1K/1M)`），上下文超过 `200K` 或达到 `≥75%` 时自动高亮 `>200K` / `建议/compact`。
+- **实时追踪实际调用模型**：当使用 `Orchestrator` 等复合模式时，轻量读取当前会话 `transcript.jsonl` 尾部，实时展示设置模型与实际底层模型（`Orchestrator (Neon) → 实际 Hydrogen (High)`）及近期切换轨迹（`轨迹 Neon×7→Hydrogen×4`）。
+- **缓存命中与重建提示**：兼容 Antigravity CLI 1.5.x+ 缓存统计，在缓存冷启动或重建时提示 `缓存重建` / `+写入`。
+- **按需友好提示（未触发时零干扰）**：
+  - `[! 待确认]`：等待工具授权时醒目提醒
   - `[PLAN]` / `[AUTO]` / `[ACCEPT-EDITS]`：当前交互模式标签
-  - `子代理 N · 后台 M · 排队 K`：运行中子代理、后台任务和排队消息数
+  - `子代理 N · 后台 M · 排队 K`：运行中的子代理、后台任务和排队消息数
   - `[沙箱]`：终端沙箱开启标记
-  - `[NORMAL]` / `[INSERT]`：Vim 模式状态
+  - `[NORMAL]` / `[INSERT]`：Vim 编辑模式状态
   - `$0.42`：会话预估费用（CLI 上报时显示）
-- **逐条消息明细查看 (`--history`)**：随时查看当前或指定会话每一步实际调用的模型、输入、缓存命中率、输出和工具列表。
+- **逐条消息明细查询 (`--history`)**：按步骤输出当前或指定会话中每条响应实际使用的模型、输入、缓存命中率、输出和工具调用统计。
+- **终端宽度自适应**：按优先级自动折叠次要标签，在窄终端下也不会折行错位。
 
-## 本地预览与常用命令
+## 快速安装
+
+环境要求：**Node.js >= 20**，零外部依赖，支持 macOS / Linux / Windows。
+
+### 方式一：通过 `npx` 一键安装（推荐）
 
 ```bash
+npx github:HoloXia/agy-statusline-pro
+```
+
+可选参数：
+
+```bash
+# 指定语言（zh-CN / zh-TW / en）或额外显示累计 Token 行
+npx github:HoloXia/agy-statusline-pro -- --language zh-CN --details
+```
+
+### 方式二：从源码安装
+
+```bash
+git clone https://github.com/HoloXia/agy-statusline-pro.git
+cd agy-statusline-pro
+node install.mjs --language zh-CN
+```
+
+> 安装脚本会自动备份你原有的 `statusLine` 配置到 `~/.gemini/antigravity-cli/.agy-statusline-pro-backup.json`，不会影响 `settings.json` 中的其他设置。
+> 安装后重启 `agy` 即可自动生效；若希望在已打开的会话中立即启用，可在会话内执行 `/statusline enable`。
+
+## 常用命令
+
+```bash
+# 预览单模型状态栏效果
+node ~/.gemini/antigravity-cli/agy-statusline-pro/statusline.mjs --preview
+
 # 预览 Orchestrator 模式 + 完整告警效果
 node ~/.gemini/antigravity-cli/agy-statusline-pro/statusline.mjs --preview-orchestrator
 
@@ -27,36 +72,12 @@ node ~/.gemini/antigravity-cli/agy-statusline-pro/statusline.mjs --history
 
 # 查看指定 transcript.jsonl 的明细
 node ~/.gemini/antigravity-cli/agy-statusline-pro/statusline.mjs --history /path/to/transcript.jsonl
-```
 
-## 安装与分享给其他人
-
-要求：**Node.js >= 20**，无需 `npm install`。
-
-### 方式 1：直接发文件夹 / 压缩包
-
-把整个 `agy-statusline-pro` 目录打包发给同事，对方解压后运行：
-
-```bash
-node install.mjs --language zh-CN
-```
-
-如需同时显示累计 Token 明细第 4 行：
-
-```bash
-node install.mjs --language zh-CN --details
-```
-
-### 方式 2：上传 GitHub 一键安装
-
-将本目录推到 GitHub 仓库（`HoloXia/agy-statusline-pro`）后，其他人只需一行命令就能安装：
-
-```bash
-npx github:HoloXia/agy-statusline-pro
-```
-
-### 卸载并恢复原状态栏
-
-```bash
+# 卸载并恢复安装前的状态栏配置
 node ~/.gemini/antigravity-cli/agy-statusline-pro/install.mjs --uninstall
 ```
+
+## 致谢与协议
+
+- 布局与配额分组设计灵感来自 [wycocoyu/agy-context-dashboard](https://github.com/wycocoyu/agy-context-dashboard)。
+- 本项目基于 [MIT License](./LICENSE) 开源。
